@@ -1,1 +1,1 @@
-# sonic-azure-imfra-ado
+# sonic-azure-infra-ado
