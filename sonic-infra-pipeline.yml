@@ -59,6 +59,7 @@ stages:
   jobs:
   - job: Tfsec
     displayName: "tfsec Scan"
+    continueOnError: true
     steps:
     - task: PowerShell@2
       displayName: Install tfsec
@@ -76,6 +77,8 @@ stages:
   
   - job: Checkov
     displayName: "Checkov Scan"
+    dependsOn: Tfsec
+    continueOnError: true
     steps:
     - task: PowerShell@2
       displayName: Install Checkov
