@@ -101,6 +101,9 @@ stages:
   jobs:
   - job: Plan
     steps:
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: 'latest'
     - checkout: self
     - script: |
         terraform init
