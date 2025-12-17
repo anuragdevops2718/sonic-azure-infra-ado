@@ -101,19 +101,35 @@ stages:
   jobs:
   - job: Plan
     steps:
-    - task: TerraformInstaller@1
+    - task: TerraformTask@5
       inputs:
-        terraformVersion: 'latest'
-    - checkout: self
-    - script: |
-        terraform init
-        terraform validate
-        terraform plan -out=tfplan
-        terraform show -json tfplan > tfplan.json
-      displayName: "Init, Validate & Plan"
-      workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        backendServiceArm: 'sonic-reg'
+        backendAzureRmResourceGroupName: 'devteam'
+        backendAzureRmStorageAccountName: 'devstorage1211'
+        backendAzureRmContainerName: 'devcontainer'
+        backendAzureRmKey: 'sonic.tfstate'
 
-    - publish: tfplan
+    
+    - task: TerraformTask@5
+      displayName: "Terraform Validate"
+      inputs:
+        provider: azurerm
+        command: validate
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+
+    - task: TerraformTask@5
+      displayName: "Terraform Plan"
+      inputs:
+        provider: azurerm
+        command: plan
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        environmentServiceNameAzureRM: sonic-reg
+        commandOptions: "-out=tfplan"
+
+    - publish: (System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev/tfplan
       artifact: terraform-plan
       displayName: "Publish tfplan"
 
