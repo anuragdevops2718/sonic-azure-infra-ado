@@ -150,7 +150,7 @@ stages:
         script: |
           infracost breakdown --path=tfplan
 
-- stage: Manual Validation
+- stage: ManualValidation
   displayName: Approval Gates
   pool: server
   dependsOn: CostEstimation
@@ -164,7 +164,7 @@ stages:
 
 - stage: Apply
   displayName: "Terraform Apply"
-  dependsOn: Approval
+  dependsOn: ManualValidation
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
   jobs:
   - job: Apply
