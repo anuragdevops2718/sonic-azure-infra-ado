@@ -3,6 +3,7 @@ trigger:
     include:
       - main
       - features/dev-infra
+      
 
 pr:
   branches:
@@ -25,7 +26,7 @@ stages:
         command: 'custom'
         workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
         outputTo: 'console'
-        customCommand: 'fmt'
+        customCommand: 'terraform fmt'
         environmentServiceNameAzureRM: 'sonic-reg'
 
 - stage: Lint
