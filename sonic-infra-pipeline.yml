@@ -142,23 +142,26 @@ stages:
   jobs:
   - job: Conftest
     steps:
-    - task: PowerShell@2
+    - task: Bash@3
       displayName: Install Conftest
       inputs:
         targetType: inline
         script: |
+          set -e
           wget -q https://github.com/open-policy-agent/conftest/releases/download/v0.52.0/conftest_0.52.0_Linux_x86_64 -O conftest
           chmod +x conftest
           sudo mv conftest /usr/local/bin/conftest
           conftest --version
-          workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
  
-    - task: PowerShell@2
+    - task: Bash@3
       displayName: Run Conftest
       inputs:
         targetType: inline
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
         script: |
-          conftest test tfplan.json
+           conftest test tfplan.json
+
 
 - stage: CostEstimation
   displayName: "Cost Estimation"
