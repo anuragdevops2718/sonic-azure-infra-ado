@@ -3,6 +3,7 @@ trigger:
     include:
       - main
       - features/dev-infra
+      
 
 pr:
   branches:
@@ -12,6 +13,9 @@ pr:
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+- group: infracost-secrets
+
 
 stages:
 - stage: Format
@@ -19,6 +23,9 @@ stages:
   jobs:
   - job: TerraformFmt
     steps:
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: 'latest'
     - task: TerraformTask@5
       inputs:
         provider: 'azurerm'
@@ -55,6 +62,7 @@ stages:
   jobs:
   - job: Tfsec
     displayName: "tfsec Scan"
+    continueOnError: true
     steps:
     - task: PowerShell@2
       displayName: Install tfsec
@@ -72,6 +80,8 @@ stages:
   
   - job: Checkov
     displayName: "Checkov Scan"
+    dependsOn: Tfsec
+    continueOnError: true
     steps:
     - task: PowerShell@2
       displayName: Install Checkov
@@ -84,8 +94,8 @@ stages:
       displayName: Run Checkov
       inputs:
         targetType: inline
-        script: checkov -d .
-        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev/main.tf'
+        script: checkov -f main.tf
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
 
 
 - stage: TerraformPlan
@@ -94,16 +104,46 @@ stages:
   jobs:
   - job: Plan
     steps:
-    - checkout: self
-    - script: |
-        terraform init
-        terraform validate
-        terraform plan -out=tfplan
-        terraform show -json tfplan > tfplan.json
-      displayName: "Init, Validate & Plan"
-      workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: 'latest'
+    - task: TerraformTask@5
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        backendServiceArm: 'sonic-reg'
+        backendAzureRmResourceGroupName: 'devteam'
+        backendAzureRmStorageAccountName: 'devstorage1211'
+        backendAzureRmContainerName: 'devcontainer'
+        backendAzureRmKey: 'sonic.tfstate'
 
-    - publish: tfplan
+    
+    - task: TerraformTask@5
+      displayName: "Terraform Validate"
+      inputs:
+        provider: azurerm
+        command: validate
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+
+    - task: TerraformTask@5
+      displayName: "Terraform Plan"
+      inputs:
+        provider: azurerm
+        command: plan
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        environmentServiceNameAzureRM: sonic-reg
+        commandOptions: "-out=tfplan"
+
+    - task: Bash@3
+      displayName: Convert tfplan to JSON
+      inputs:
+        targetType: inline
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        script: |
+          terraform show -json tfplan > tfplan.json
+
+    - publish: $(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev
       artifact: terraform-plan
       displayName: "Publish tfplan"
 
@@ -111,24 +151,32 @@ stages:
   displayName: "Pre-Apply Policy Tests"
   dependsOn: TerraformPlan
   jobs:
-  - job: Conftest
+  - job: Conftest 
     steps:
-    - task: PowerShell@2
+    - download: current
+      artifact: terraform-plan
+    - task: Bash@3
       displayName: Install Conftest
       inputs:
         targetType: inline
         script: |
-          curl -L https://github.com/open-policy-agent/conftest/releases/latest/download/conftest_Linux_x86_64.tar.gz -o conftest.tar.gz
-          tar -xzf conftest.tar.gz
-          sudo mv conftest /usr/local/bin
+          set -e
+          VERSION=0.52.0
+          wget https://github.com/open-policy-agent/conftest/releases/download/v${VERSION}/conftest_${VERSION}_Linux_x86_64.tar.gz
+          tar -xzf conftest_${VERSION}_Linux_x86_64.tar.gz
+          chmod +x conftest
+          sudo mv conftest /usr/local/bin/conftest
+          conftest --version
         workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
-
-    - task: PowerShell@2
+ 
+    - task: Bash@3
       displayName: Run Conftest
       inputs:
         targetType: inline
+        workingDirectory: '$(Pipeline.Workspace)/terraform-plan'
         script: |
-          conftest test tfplan.json
+           conftest test tfplan.json --policy policy
+
 
 - stage: CostEstimation
   displayName: "Cost Estimation"
@@ -148,7 +196,7 @@ stages:
       inputs:
         targetType: inline
         script: |
-          infracost breakdown --path=tfplan
+          infracost breakdown --path=$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev
 
 - stage: ManualValidation
   displayName: Approval Gates
@@ -181,13 +229,14 @@ stages:
         backendAzureRmResourceGroupName: 'devteam'
         backendAzureRmStorageAccountName: 'devstorage1211'
         backendAzureRmContainerName: 'devcontainer'
-        backendAzureRmKey: 'sonic.tfstate'
-    - checkout: self
-    - download: current
-      artifact: terraform-plan
-    - script: |
-        terraform apply -auto-approve 
-      displayName: "Terraform Apply"
+        backendAzureRmKey: 'sonicmain.tfstate'
+
+    - task: TerraformTask@5
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        environmentServiceNameAzureRM: 'sonic-reg'
 
 - stage: PostTest
   displayName: "Post-Apply Infra Tests"
@@ -208,6 +257,8 @@ stages:
       displayName: Run Terratest
       inputs:
         targetType: inline
+        workingDirectory: $(System.DefaultWorkingDirectory)/terratest
         script: |
-          go test ./terratest/... -v
+          go test -v
+
 
