@@ -13,6 +13,9 @@ pr:
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+- group: infracost-secrets
+
 
 stages:
 - stage: Format
@@ -140,7 +143,7 @@ stages:
         script: |
           terraform show -json tfplan > tfplan.json
 
-    - publish: infrastructure_landing_zone/environment/dev
+    - publish: $(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev
       artifact: terraform-plan
       displayName: "Publish tfplan"
 
@@ -172,7 +175,7 @@ stages:
         targetType: inline
         workingDirectory: '$(Pipeline.Workspace)/terraform-plan'
         script: |
-           conftest test tfplan.json
+           conftest test tfplan.json --policy policy
 
 
 - stage: CostEstimation
@@ -193,7 +196,7 @@ stages:
       inputs:
         targetType: inline
         script: |
-          infracost breakdown --path=tfplan
+          infracost breakdown --path=$(Pipeline.Workspace)/terraform-plan/tfplan.json
 
 - stage: ManualValidation
   displayName: Approval Gates
