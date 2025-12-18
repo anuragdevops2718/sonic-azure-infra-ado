@@ -148,8 +148,10 @@ stages:
   displayName: "Pre-Apply Policy Tests"
   dependsOn: TerraformPlan
   jobs:
-  - job: Conftest
+  - job: Conftest 
     steps:
+    - download: current
+      artifact: terraform-plan
     - task: Bash@3
       displayName: Install Conftest
       inputs:
