@@ -229,7 +229,7 @@ stages:
         backendAzureRmResourceGroupName: 'devteam'
         backendAzureRmStorageAccountName: 'devstorage1211'
         backendAzureRmContainerName: 'devcontainer'
-        backendAzureRmKey: 'sonic.tfstate'
+        backendAzureRmKey: 'sonicmain.tfstate'
 
     - checkout: self
     - download: current
