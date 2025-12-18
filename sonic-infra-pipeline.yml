@@ -168,7 +168,7 @@ stages:
       displayName: Run Conftest
       inputs:
         targetType: inline
-        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        workingDirectory: '$(Pipeline.Workspace)/terraform-plan'
         script: |
            conftest test tfplan.json
 
