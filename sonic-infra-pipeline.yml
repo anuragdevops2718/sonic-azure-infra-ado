@@ -13,6 +13,9 @@ pr:
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+- group: infracost-secrets
+
 
 stages:
 - stage: Format
@@ -91,7 +94,7 @@ stages:
       displayName: Run Checkov
       inputs:
         targetType: inline
-        script: checkov -d .
+        script: checkov -f main.tf
         workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
 
 
@@ -140,7 +143,7 @@ stages:
         script: |
           terraform show -json tfplan > tfplan.json
 
-    - publish: infrastructure_landing_zone/environment/dev
+    - publish: $(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev
       artifact: terraform-plan
       displayName: "Publish tfplan"
 
@@ -172,7 +175,7 @@ stages:
         targetType: inline
         workingDirectory: '$(Pipeline.Workspace)/terraform-plan'
         script: |
-           conftest test tfplan.json
+           conftest test tfplan.json --policy policy
 
 
 - stage: CostEstimation
@@ -193,7 +196,7 @@ stages:
       inputs:
         targetType: inline
         script: |
-          infracost breakdown --path=tfplan
+          infracost breakdown --path=$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev
 
 - stage: ManualValidation
   displayName: Approval Gates
@@ -214,13 +217,26 @@ stages:
   jobs:
   - job: Apply
     steps:
-    - checkout: self
-    - download: current
-      artifact: terraform-plan
-    - script: |
-        terraform init
-        terraform apply -auto-approve tfplan
-      displayName: "Terraform Apply"
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: 'latest'
+    - task: TerraformTask@5
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        backendServiceArm: 'sonic-reg'
+        backendAzureRmResourceGroupName: 'devteam'
+        backendAzureRmStorageAccountName: 'devstorage1211'
+        backendAzureRmContainerName: 'devcontainer'
+        backendAzureRmKey: 'sonicmain.tfstate'
+
+    - task: TerraformTask@5
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        environmentServiceNameAzureRM: 'sonic-reg'
 
 - stage: PostTest
   displayName: "Post-Apply Infra Tests"
@@ -241,6 +257,8 @@ stages:
       displayName: Run Terratest
       inputs:
         targetType: inline
+        workingDirectory: $(System.DefaultWorkingDirectory)/terratest
         script: |
-          go test ./terratest/... -v
+          go test -v
+
 
