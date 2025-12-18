@@ -1,5 +1,4 @@
 # Data for tenant_id (used in Key Vault)
-data "azurerm_client_config" "current" {}
 
 module "rg" {
   source     = "../../modules/azurerm_rg"
