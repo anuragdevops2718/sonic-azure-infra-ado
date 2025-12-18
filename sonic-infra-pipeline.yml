@@ -132,7 +132,15 @@ stages:
         environmentServiceNameAzureRM: sonic-reg
         commandOptions: "-out=tfplan"
 
-    - publish: (System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev/tfplan
+    - task: Bash@3
+      displayName: Convert tfplan to JSON
+      inputs:
+        targetType: inline
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        script: |
+          terraform show -json tfplan > tfplan.json
+
+    - publish: infrastructure_landing_zone/environment/dev
       artifact: terraform-plan
       displayName: "Publish tfplan"
 
@@ -140,24 +148,32 @@ stages:
   displayName: "Pre-Apply Policy Tests"
   dependsOn: TerraformPlan
   jobs:
-  - job: Conftest
+  - job: Conftest 
     steps:
-    - task: PowerShell@2
+    - download: current
+      artifact: terraform-plan
+    - task: Bash@3
       displayName: Install Conftest
       inputs:
         targetType: inline
         script: |
-          curl -L https://github.com/open-policy-agent/conftest/releases/latest/download/conftest_Linux_x86_64.tar.gz -o conftest.tar.gz
-          tar -xzf conftest.tar.gz
-          sudo mv conftest /usr/local/bin
+          set -e
+          VERSION=0.52.0
+          wget https://github.com/open-policy-agent/conftest/releases/download/v${VERSION}/conftest_${VERSION}_Linux_x86_64.tar.gz
+          tar -xzf conftest_${VERSION}_Linux_x86_64.tar.gz
+          chmod +x conftest
+          sudo mv conftest /usr/local/bin/conftest
+          conftest --version
         workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
-
-    - task: PowerShell@2
+ 
+    - task: Bash@3
       displayName: Run Conftest
       inputs:
         targetType: inline
+        workingDirectory: '$(Pipeline.Workspace)/terraform-plan'
         script: |
-          conftest test tfplan.json
+           conftest test tfplan.json
+
 
 - stage: CostEstimation
   displayName: "Cost Estimation"
