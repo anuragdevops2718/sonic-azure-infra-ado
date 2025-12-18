@@ -154,7 +154,7 @@ stages:
           chmod +x conftest
           sudo mv conftest /usr/local/bin/conftest
           conftest --version
-          workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
  
     - task: Bash@3
       displayName: Run Conftest
