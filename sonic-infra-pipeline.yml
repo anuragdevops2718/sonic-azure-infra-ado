@@ -148,11 +148,13 @@ stages:
         targetType: inline
         script: |
           set -e
-          wget -q https://github.com/open-policy-agent/conftest/releases/download/v0.52.0/conftest_0.52.0_Linux_x86_64 -O conftest
+          VERSION=0.52.0
+          wget https://github.com/open-policy-agent/conftest/releases/download/v${VERSION}/conftest_${VERSION}_Linux_x86_64.tar.gz
+          tar -xzf conftest_${VERSION}_Linux_x86_64.tar.gz
           chmod +x conftest
           sudo mv conftest /usr/local/bin/conftest
           conftest --version
-        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
  
     - task: Bash@3
       displayName: Run Conftest
