@@ -132,6 +132,14 @@ stages:
         environmentServiceNameAzureRM: sonic-reg
         commandOptions: "-out=tfplan"
 
+    - task: Bash@3
+      displayName: Convert tfplan to JSON
+      inputs:
+        targetType: inline
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        script: |
+          terraform show -json tfplan > tfplan.json
+
     - publish: infrastructure_landing_zone/environment/dev
       artifact: terraform-plan
       displayName: "Publish tfplan"
