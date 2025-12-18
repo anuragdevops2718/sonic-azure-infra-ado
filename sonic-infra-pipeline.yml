@@ -196,7 +196,7 @@ stages:
       inputs:
         targetType: inline
         script: |
-          infracost breakdown --path=$(Pipeline.Workspace)/terraform-plan/tfplan.json
+          infracost breakdown --path=$(Pipeline.Workspace)/terraform-plan 
 
 - stage: ManualValidation
   displayName: Approval Gates
