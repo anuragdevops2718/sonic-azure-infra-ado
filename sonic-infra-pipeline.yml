@@ -147,11 +147,11 @@ stages:
       inputs:
         targetType: inline
         script: |
-          curl -L https://github.com/open-policy-agent/conftest/releases/latest/download/conftest_Linux_x86_64.tar.gz -o conftest.tar.gz
-          tar -xzf conftest.tar.gz
+          curl -L -o conftest https://github.com/open-policy-agent/conftest/releases/download/v0.52.0/conftest_0.52.0_Linux_x86_64
+          chmod +x conftest
           sudo mv conftest /usr/local/bin
+          conftest --version
         workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
-
     - task: PowerShell@2
       displayName: Run Conftest
       inputs:
