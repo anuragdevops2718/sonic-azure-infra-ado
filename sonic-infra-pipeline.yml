@@ -196,7 +196,7 @@ stages:
       inputs:
         targetType: inline
         script: |
-          infracost breakdown --path=$(Pipeline.Workspace)/terraform-plan 
+          infracost breakdown --path=$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev
 
 - stage: ManualValidation
   displayName: Approval Gates
