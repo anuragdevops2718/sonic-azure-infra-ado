@@ -257,6 +257,8 @@ stages:
       displayName: Run Terratest
       inputs:
         targetType: inline
+        workingDirectory: $(System.DefaultWorkingDirectory)/terratest
         script: |
-          go test ./terratest/... -v
+          go test -v
+
 
