@@ -95,7 +95,7 @@ stages:
       inputs:
         targetType: inline
         script: checkov -d .
-        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev/main.tf'
 
 
 - stage: TerraformPlan
@@ -217,12 +217,25 @@ stages:
   jobs:
   - job: Apply
     steps:
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: 'latest'
+    - task: TerraformTask@5
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+        backendServiceArm: 'sonic-reg'
+        backendAzureRmResourceGroupName: 'devteam'
+        backendAzureRmStorageAccountName: 'devstorage1211'
+        backendAzureRmContainerName: 'devcontainer'
+        backendAzureRmKey: 'sonic.tfstate'
+
     - checkout: self
     - download: current
       artifact: terraform-plan
     - script: |
-        terraform init
-        terraform apply -auto-approve tfplan
+        terraform apply -auto-approve
       displayName: "Terraform Apply"
 
 - stage: PostTest
