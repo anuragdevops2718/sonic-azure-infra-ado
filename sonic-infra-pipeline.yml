@@ -147,11 +147,12 @@ stages:
       inputs:
         targetType: inline
         script: |
-          curl -L -o conftest https://github.com/open-policy-agent/conftest/releases/download/v0.52.0/conftest_0.52.0_Linux_x86_64
+          wget -q https://github.com/open-policy-agent/conftest/releases/download/v0.52.0/conftest_0.52.0_Linux_x86_64 -O conftest
           chmod +x conftest
-          sudo mv conftest /usr/local/bin
+          sudo mv conftest /usr/local/bin/conftest
           conftest --version
-        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure_landing_zone/environment/dev'
+ 
     - task: PowerShell@2
       displayName: Run Conftest
       inputs:
