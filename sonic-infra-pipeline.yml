@@ -261,7 +261,7 @@ stages:
          sudo apt-get install -y golang-go
          cd infrastructure_landing_zone/terratest
          go test -v
-         powerShellErrorActionPreference: 'continue'
+       powerShellErrorActionPreference: 'continue'
        addSpnToEnvironment: true
        keepAzSessionActive: true
        failOnStandardError: false
