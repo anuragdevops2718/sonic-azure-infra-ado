@@ -8,6 +8,7 @@ import (
 func TestTerraformInfra(t *testing.T) {
   terraformOptions := &terraform.Options{
     TerraformDir: "../environment/dev",
+    TerraformBinary: "terraform",
   }
 
   terraform.InitAndPlan(t, terraformOptions)
