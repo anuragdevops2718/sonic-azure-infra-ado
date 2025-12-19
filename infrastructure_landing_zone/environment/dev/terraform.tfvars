@@ -34,7 +34,7 @@ aks_config = {
 
 mssql_config = {
   sql1 = {
-    servername          = "devsqlserveraifuture"
+    servername          = "devsqlserveraifuture19"
     resource_group_name = "devrgaifuture"
     location            = "westus"
     dbname              = "devsqldbaifuture"
