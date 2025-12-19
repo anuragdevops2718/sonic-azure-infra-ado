@@ -245,6 +245,9 @@ stages:
   jobs:
   - job: Terratest
     steps:
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: 'latest'
     - task: PowerShell@2
       displayName: Setup Go
       inputs:
