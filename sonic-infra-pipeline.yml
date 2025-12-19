@@ -262,5 +262,6 @@ stages:
          cd infrastructure_landing_zone/terratest
          go test -v
          powerShellErrorActionPreference: 'continue'
-         addSpnToEnvironment: true
-         keepAzSessionActive: true
+       addSpnToEnvironment: true
+       keepAzSessionActive: true
+       failOnStandardError: false
