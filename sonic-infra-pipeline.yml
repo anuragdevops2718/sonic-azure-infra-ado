@@ -245,23 +245,22 @@ stages:
   jobs:
   - job: Terratest
     steps:
+    - checkout: self
     - task: TerraformInstaller@1
       inputs:
         terraformVersion: 'latest'
-    - task: PowerShell@2
-      displayName: Setup Go
+
+    - task: AzureCLI@2
+      displayName: Install and RUn Terratest 
       inputs:
-        targetType: inline
-        script: |
-          sudo apt-get update
-          sudo apt-get install -y golang-go
-
-    - task: PowerShell@2
-      displayName: Run Terratest
-      inputs:
-        targetType: inline
-        workingDirectory: $(System.DefaultWorkingDirectory)/infrastructure_landing_zone/terratest
-        script: |
-          go test -v
-
-
+       azureSubscription: 'sonic-reg'
+       scriptType: 'pscore'
+       scriptLocation: 'inlineScript'
+       inlineScript: |
+         sudo apt-get update
+         sudo apt-get install -y golang-go
+         cd infrastructure_landing_zone/terratest
+         go test -v
+         powerShellErrorActionPreference: 'continue'
+         addSpnToEnvironment: true
+         keepAzSessionActive: true
