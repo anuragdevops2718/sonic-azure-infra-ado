@@ -28,9 +28,9 @@ module "kvsec" {
   source = "../../modules/azurerm_kv_secrets"
   kvsec_config = var.kvsec_config
 }
-
 module "sql" {
   depends_on = [ module.kvsec, module.aks ]
   source      = "../../modules/azurerm_sql_server_db"
   mssql_config  = var.mssql_config
 }
+
